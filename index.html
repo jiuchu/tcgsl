@@ -5,6 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>唐朝诡事录之长安 - 预约查询</title>
     <style>
+        /* 数据更新抖动动画 */
+.value-update {
+    animation: valueUpdateAnimation 0.9s ease-in-out;
+}
+
+@keyframes valueUpdateAnimation {
+    0% {
+        transform: scale(1);
+        color: #e6e6e6;
+    }
+    25% {
+        transform: scale(1.1);
+        color: #ffd700;
+    }
+    50% {
+        transform: scale(1.15);
+        color: #ffaa00;
+    }
+    75% {
+        transform: scale(1.1);
+        color: #ffd700;
+    }
+    100% {
+        transform: scale(1);
+        color: #e6e6e6;
+    }
+}
+
+/* 按钮点击效果 */
+.btn-click {
+    animation: btnClickAnimation 0.3s ease;
+}
+
+@keyframes btnClickAnimation {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.95);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
         * {
             margin: 0;
             padding: 0;
@@ -132,10 +177,24 @@
             box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
         }
 
+        /* 确保加载动画样式正确 */
         .loading {
             display: none;
             color: #ffd700;
-            margin: 20px 0;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .loading.show {
+            display: block;
+            opacity: 1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .error-message {
@@ -320,259 +379,259 @@
 <!--                <div class="countdown-message" id="countdownMessage">2025年11月8日中午12:00上线</div>-->
 <!--            </div>-->
 
-            <div class="reservation-section">
-                <h2>预约人数</h2>
-                <div class="reservation-count" id="reservationCount">--</div>
-                <button class="refresh-btn" id="refreshBtn">刷新数据</button>
-                <div class="loading" id="loading">正在更新数据...</div>
-                <div class="error-message" id="errorMessage"></div>
-                <div class="update-time" id="updateTime">最后更新: --</div>
+<!--            <div class="reservation-section">-->
+<!--                <h2>预约人数</h2>-->
+<!--                <div class="reservation-count" id="reservationCount">&#45;&#45;</div>-->
+<!--                <button class="refresh-btn" id="refreshBtn">刷新数据</button>-->
+<!--                <div class="loading" id="loading">正在更新数据...</div>-->
+<!--                <div class="error-message" id="errorMessage"></div>-->
+<!--                <div class="update-time" id="updateTime">最后更新: &#45;&#45;</div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+            <!-- 豆瓣评分信息 -->
+            <div class="info-item">
+                <span class="info-label">评价人数：</span>
+                <span id="review-count">--</span>
             </div>
-        </div>
-    </div>
 
-    <footer>
+            <div class="info-item">
+                <span class="info-label">豆瓣评分：</span>
+                <span id="rating-value">--</span>
+            </div>
+
+            <!-- 豆瓣评分刷新按钮 -->
+            <div class="reservation-section" style="margin-top: 20px; background: rgba(40, 40, 60, 0.7);">
+                <button class="refresh-btn" id="doubanRefreshBtn">刷新豆瓣评分</button>
+                <div class="loading" id="doubanLoading" style="display: none; margin-top: 15px;">正在更新数据...</div>
+                <div class="error-message" id="doubanErrorMessage" style="display: none; margin-top: 15px;"></div>
+                <div class="update-time" id="doubanUpdateTime" style="margin-top: 15px;">最后更新: --</div>
+            </div>
+
+
+            <footer>
         <p>数据来源：电视剧预约平台 | 本页面仅用于演示</p>
     </footer>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const reservationCount = document.getElementById('reservationCount');
-        const refreshBtn = document.getElementById('refreshBtn');
-        const loading = document.getElementById('loading');
-        const errorMessage = document.getElementById('errorMessage');
-        const updateTime = document.getElementById('updateTime');
 
-        // 倒计时相关元素
-        const daysElement = document.getElementById('days');
-        const hoursElement = document.getElementById('hours');
-        const minutesElement = document.getElementById('minutes');
-        const secondsElement = document.getElementById('seconds');
-        const countdownMessage = document.getElementById('countdownMessage');
-
-        // API接口地址
-        const apiUrl = 'https://subscription.iqiyi.com/services/subscribe/countAndState.htm?authcookie=95OZgOqu7GWj7s9Tiu5Vy1nvpyNZTL9ZAtoyquLMUXCYrbvbym2lXXSCIj8m3fOLte3J25&subType=2&agentType=30&version=13.111.23635&dfp=a1e25e11e7d0b448139968c74af97e72120706a27fef58d792a4d7ce51a96b1497&subKeys=5188910059290200';
-
-        // 格式化数字
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
-
-        // 获取真实API数据
-        async function fetchReservationData() {
-            loading.style.display = 'block';
-            errorMessage.style.display = 'none';
-            refreshBtn.disabled = true;
-
-            try {
-                const response = await fetch(apiUrl);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP错误! 状态: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                if (data.code === 'A00000' && data.data && data.data['5188910059290200']) {
-                    const count = data.data['5188910059290200'].count;
-                    reservationCount.textContent = formatNumber(count);
-
-                    // 更新最后更新时间
-                    const now = new Date();
-                    updateTime.textContent = `最后更新: ${now.toLocaleString('zh-CN')}`;
-                } else {
-                    throw new Error('API返回数据格式不正确');
-                }
-            } catch (error) {
-                console.error('获取数据失败:', error);
-                errorMessage.textContent = `获取数据失败: ${error.message}`;
-                errorMessage.style.display = 'block';
-                reservationCount.textContent = '--';
-            } finally {
-                loading.style.display = 'none';
-                refreshBtn.disabled = false;
-            }
-        }
-// 热度API接口地址
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        // 热度API接口地址
         const heatApiUrl = 'https://mesh.if.iqiyi.com/tvg/v2/lw/base_info?entity_id=2628396673367100&device_id=2sjzaktrme4artvvrxgtloka75hrqjex&auth_cookie=7cqpm2Zbm23SeWdDm3l5qCbq6IgUf95kZ4SVQplWXl7SjqIgdpWKiqD0Wm1JYYJqdtIBx091&user_id=1097201185&vip_type=1&vip_status=1&conduit_id=&pcv=13.111.23635&app_version=13.111.23635&ext=&app_mode=standard&scale=125&timestamp=1762501117503&src=pca_tvg&os=&ad_ext=%7B%22r%22%3A%222.6.4-ares6-pure%22%7D&sign=239D2E523677EC7FFFE1C2577E62E1EB';
+
+        // 格式化数字，添加千位分隔符
+        function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
 
         // 获取热度数据
         async function fetchHeatData() {
-            loading.style.display = 'block';
-            errorMessage.style.display = 'none';
-            refreshBtn.disabled = true;
+        try {
+        const response = await fetch(heatApiUrl);
 
-            try {
-                const response = await fetch(heatApiUrl);
+        if (!response.ok) {
+        throw new Error(`HTTP错误! 状态: ${response.status}`);
+    }
 
-                if (!response.ok) {
-                    throw new Error(`HTTP错误! 状态: ${response.status}`);
+        const result = await response.json();
+        console.log('API返回数据:', result);
+
+        // 更严格的条件检查
+        if (result &&
+        result.data &&
+        result.data.base_data) {
+
+        // 处理热度值
+        if (typeof result.data.base_data.heat === 'number') {
+        const heat = result.data.base_data.heat;
+        const heatValueElement = document.getElementById('heatValue');
+        heatValueElement.textContent = formatNumber(heat);
+        heatValueElement.style.color = '#ff6b6b';
+    }
+
+        // 处理更新信息
+        if (result.data.base_data.update_info) {
+        const updateInfo = result.data.base_data.update_info;
+
+        // 更新时间
+        if (updateInfo.update_notification) {
+        document.getElementById('updateNotification').textContent = updateInfo.update_notification;
+    }
+
+        // 更新进度
+        if (updateInfo.update_status) {
+        document.getElementById('updateStatus').textContent = updateInfo.update_status;
+    }
+
+        // 更新提示
+        if (updateInfo.extra_tip) {
+        document.getElementById('extraTip').textContent = updateInfo.extra_tip;
+    }
+    }
+    } else {
+        throw new Error('API返回数据格式不正确或热度值不存在');
+    }
+    } catch (error) {
+        console.error('获取热度数据失败:', error);
+        const heatValueElement = document.getElementById('heatValue');
+        heatValueElement.textContent = '--';
+    }
+    }
+            // 使用JSONP获取豆瓣评分数据
+            function fetchDoubanRating() {
+                try {
+                    // 创建script标签实现JSONP
+                    const script = document.createElement('script');
+                    const callbackName = 'doubanCallback_' + Date.now();
+
+                    window[callbackName] = function(data) {
+                        // 显示评价人数和评分
+                        document.getElementById('review-count').textContent = data.rating.count.toLocaleString();
+                        document.getElementById('rating-value').textContent = data.rating.value;
+
+                        // 更新最后更新时间
+                        const now = new Date();
+                        const timeString = now.toLocaleString('zh-CN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: false
+                        }).replace(/\//g, '/').replace(',', '');
+                        document.getElementById('doubanUpdateTime').textContent = `最后更新: ${timeString}`;
+
+                        // 清理
+                        document.head.removeChild(script);
+                        delete window[callbackName];
+                    };
+
+                    script.src = `https://m.douban.com/rexxar/api/v2/tv/36318037?ck=jq_a&for_mobile=1&callback=${callbackName}`;
+                    document.head.appendChild(script);
+                } catch (error) {
+                    console.error('获取豆瓣评分失败:', error);
+                    document.getElementById('review-count').textContent = '--';
+                    document.getElementById('rating-value').textContent = '--';
+                    // 即使出错也更新时间
+                    const now = new Date();
+                    const timeString = now.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    }).replace(/\//g, '/').replace(',', '');
+                    document.getElementById('doubanUpdateTime').textContent = `最后更新: ${timeString}`;
                 }
+            }
+// 豆瓣评分刷新按钮事件监听
+            document.getElementById('doubanRefreshBtn').addEventListener('click', function() {
+                refreshDoubanRating();
+            });
 
-                const result = await response.json();
-                console.log('API返回数据:', result); // 调试用
+// 刷新豆瓣评分数据函数
+            // 刷新豆瓣评分数据函数
+            async function refreshDoubanRating() {
+                const refreshBtn = document.getElementById('doubanRefreshBtn');
+                const loadingElement = document.getElementById('doubanLoading');
+                const errorMessageElement = document.getElementById('doubanErrorMessage');
+                const updateTimeElement = document.getElementById('doubanUpdateTime');
+                const reviewCountElement = document.getElementById('review-count');
+                const ratingValueElement = document.getElementById('rating-value');
 
-                // 更严格的条件检查
-                if (result &&
-                    result.data &&
-                    result.data.base_data &&
-                    typeof result.data.base_data.heat === 'number') {
+                // 添加按钮点击动画
+                refreshBtn.classList.add('btn-click');
+                setTimeout(() => {
+                    refreshBtn.classList.remove('btn-click');
+                }, 300);
 
-                    const heat = result.data.base_data.heat;
-                    const heatValueElement = document.getElementById('heatValue');
-                    heatValueElement.textContent = formatNumber(heat);
-                    heatValueElement.style.color = '#ff6b6b'; // 红色
+                // 显示加载状态 - 使用更明确的显示方式
+                refreshBtn.disabled = true;
+                loadingElement.style.display = 'block';
+                loadingElement.style.opacity = '1';
+                errorMessageElement.style.display = 'none';
+
+                try {
+                    await fetchDoubanRating();
                     // 更新最后更新时间
                     const now = new Date();
-                    updateTime.textContent = `最后更新: ${now.toLocaleString('zh-CN')}`;
-                } else {
-                    throw new Error('API返回数据格式不正确或热度值不存在');
+                    const timeString = now.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    }).replace(/\//g, '/').replace(',', '');
+                    updateTimeElement.textContent = `最后更新: ${timeString}`;
+
+                    // 添加数据更新动画效果
+                    reviewCountElement.classList.add('value-update');
+                    ratingValueElement.classList.add('value-update');
+
+                    // 动画结束后移除类名
+                    setTimeout(() => {
+                        reviewCountElement.classList.remove('value-update');
+                        ratingValueElement.classList.remove('value-update');
+                    }, 900);
+                } catch (error) {
+                    console.error('刷新豆瓣评分失败:', error);
+                    errorMessageElement.textContent = '刷新失败，请稍后重试';
+                    errorMessageElement.style.display = 'block';
+                } finally {
+                    // 恢复按钮状态 - 确保动画隐藏
+                    setTimeout(() => {
+                        refreshBtn.disabled = false;
+                        loadingElement.style.display = 'none';
+                        loadingElement.style.opacity = '0';
+                    }, 300); // 添加轻微延迟确保用户能看到加载状态
                 }
-            } catch (error) {
-                console.error('获取热度数据失败:', error);
-                errorMessage.textContent = `获取热度数据失败: ${error.message}`;
-                errorMessage.style.display = 'block';
-                const heatValueElement = document.getElementById('heatValue');
-                heatValueElement.textContent = '--';
-            } finally {
-                loading.style.display = 'none';
-                refreshBtn.disabled = false;
             }
-        }
-
-// 获取热度数据（修正后的唯一版本）
-        async function fetchHeatData() {
-            loading.style.display = 'block';
-            errorMessage.style.display = 'none';
-            refreshBtn.disabled = true;
-
-            try {
-                const response = await fetch(heatApiUrl);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP错误! 状态: ${response.status}`);
-                }
-
-                const result = await response.json();
-                console.log('API返回数据:', result); // 调试用
-
-                // 更严格的条件检查
-                if (result &&
-                    result.data &&
-                    result.data.base_data) {
-
-                    // 处理热度值
-                    if (typeof result.data.base_data.heat === 'number') {
-                        const heat = result.data.base_data.heat;
-                        const heatValueElement = document.getElementById('heatValue');
-                        heatValueElement.textContent = formatNumber(heat);
-                        heatValueElement.style.color = '#ff6b6b'; // 红色
-                    }
-
-                    // 处理更新信息
-                    if (result.data.base_data.update_info) {
-                        const updateInfo = result.data.base_data.update_info;
-
-                        // 更新时间
-                        if (updateInfo.update_notification) {
-                            document.getElementById('updateNotification').textContent = updateInfo.update_notification;
-                        }
-
-                        // 更新进度
-                        if (updateInfo.update_status) {
-                            document.getElementById('updateStatus').textContent = updateInfo.update_status;
-                        }
-
-                        // 更新提示
-                        if (updateInfo.extra_tip) {
-                            document.getElementById('extraTip').textContent = updateInfo.extra_tip;
-                        }
-                    }
-
-                    // 更新最后更新时间
-                    const now = new Date();
-                    updateTime.textContent = `最后更新: ${now.toLocaleString('zh-CN')}`;
-                } else {
-                    throw new Error('API返回数据格式不正确或热度值不存在');
-                }
-            } catch (error) {
-                console.error('获取热度数据失败:', error);
-                errorMessage.textContent = `获取热度数据失败: ${error.message}`;
-                errorMessage.style.display = 'block';
-                const heatValueElement = document.getElementById('heatValue');
-                heatValueElement.textContent = '--';
-            } finally {
-                loading.style.display = 'none';
-                refreshBtn.disabled = false;
-            }
-        }
-
-
-
-
-// 格式化数字，添加千位分隔符
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        }
-
-// 页面加载时获取热度数据
-        document.addEventListener('DOMContentLoaded', function() {
-            fetchHeatData();
-
-            // 每5分钟自动刷新一次热度数据
-            setInterval(fetchHeatData, 5 * 60 * 1000);
-        });
-        // 倒计时功能
-        // function updateCountdown() {
-        //     // 设置上线时间：2025年11月8日中午12:00
-        //     const releaseDate = new Date('2025-11-08T12:00:00');
-        //     const now = new Date();
-        //
-        //     // 计算时间差（毫秒）
-        //     const timeDiff = releaseDate - now;
-        //
-        //     // 如果已经过了上线时间
-        //     if (timeDiff <= 0) {
-        //         daysElement.textContent = '00';
-        //         hoursElement.textContent = '00';
-        //         minutesElement.textContent = '00';
-        //         secondsElement.textContent = '00';
-        //         countdownMessage.textContent = '剧集已上线，欢迎观看！';
-        //         return;
-        //     }
-        //
-        //     // 计算天、时、分、秒
-        //     const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-        //     const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        //     const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-        //     const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
-        //
-        //     // 更新倒计时显示
-        //     daysElement.textContent = days.toString().padStart(2, '0');
-        //     hoursElement.textContent = hours.toString().padStart(2, '0');
-        //     minutesElement.textContent = minutes.toString().padStart(2, '0');
-        //     secondsElement.textContent = seconds.toString().padStart(2, '0');
-        // }
-
-        // 页面加载时获取数据
-        fetchReservationData();
+            // 页面加载时获取热度数据
         fetchHeatData();
 
-        // 初始化倒计时
-       // updateCountdown();
-
-        // 添加刷新按钮事件监听
-        refreshBtn.addEventListener('click', fetchReservationData);
-
-        // 每5秒自动刷新一次预约数据
-        setInterval(fetchReservationData, 5 * 1 * 1000);
         // 每5秒自动刷新一次热度数据
-        setInterval(fetchHeatData, 5 * 1 * 1000);
+        setInterval(fetchHeatData, 5 * 1000);
 
-        // 每秒更新一次倒计时
-        //setInterval(updateCountdown, 1000);
-    });
+// 页面加载时获取豆瓣评分数据
+            fetchDoubanRating();
+            // 每30秒自动刷新一次豆瓣评分数据
+            setInterval(() => {
+                const loadingElement = document.getElementById('doubanLoading');
+                const errorMessageElement = document.getElementById('doubanErrorMessage');
+
+                // 显示加载状态
+                if (loadingElement) {
+                    loadingElement.style.display = 'block';
+                    loadingElement.style.opacity = '1';
+                }
+                if (errorMessageElement) {
+                    errorMessageElement.style.display = 'none';
+                }
+
+                try {
+                    fetchDoubanRating();
+                } catch (error) {
+                    console.error('自动刷新豆瓣评分失败:', error);
+                    if (errorMessageElement) {
+                        errorMessageElement.textContent = '自动刷新失败';
+                        errorMessageElement.style.display = 'block';
+                    }
+                }
+
+                // 由于 fetchDoubanRating 是 JSONP 实现，需要使用定时方式隐藏加载动画
+                setTimeout(() => {
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                        loadingElement.style.opacity = '0';
+                    }
+                }, 1000); // 2秒后自动隐藏加载动画
+            }, 5 * 1000);   });
 </script>
 </body>
 </html>
