@@ -5,6 +5,996 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大生意人 - 数据看板</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>        :root {
+        --primary: #8a2be2;
+        --secondary: #ff6b6b;
+        --dark: #0f0c29;
+        --darker: #09071f;
+        --light: #f8f9fa;
+        --gray: #6c757d;
+        --success: #20bf6b;
+        --warning: #f7b731;
+        --info: #3867d6;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+        background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+        color: var(--light);
+        min-height: 100vh;
+        overflow-x: hidden;
+    }
+
+    .background-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+    }
+
+    .background-animation div {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(138, 43, 226, 0.1);
+        animation: float 15s infinite linear;
+    }
+
+    @keyframes float {
+        0% {
+            transform: translate(0, 0) rotate(0deg);
+            opacity: 0.2;
+        }
+        50% {
+            opacity: 0.5;
+        }
+        100% {
+            transform: translate(100vw, 100vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    header {
+        text-align: center;
+        padding: 30px 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .logo {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+        background: linear-gradient(45deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+    }
+
+    h1 {
+        font-size: 2.8rem;
+        margin-bottom: 10px;
+        background: linear-gradient(45deg, var(--light), #ffd700);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: 1px;
+    }
+
+    .subtitle {
+        font-size: 1.3rem;
+        color: #aaa;
+        margin-bottom: 20px;
+    }
+
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .stat-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        background: linear-gradient(45deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+
+
+    .stat-title {
+        font-size: 1.1rem;
+        color: #aaa;
+        margin-bottom: 10px;
+        width: 100%;
+    }
+
+    .stat-value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        background: linear-gradient(45deg, var(--light), #ffd700);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        width: 100%;
+    }
+
+    .stat-trend {
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .trend-up {
+        color: var(--success);
+    }
+
+    .trend-down {
+        color: var(--secondary);
+    }
+
+    .content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+
+    @media (max-width: 992px) {
+        .content {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .poster-section {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .poster {
+        width: 100%;
+        max-width: 350px;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        transition: transform 0.3s ease;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .poster:hover {
+        transform: scale(1.5); /* 放大1.5倍 */
+    }
+
+    .info-section {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(138, 43, 226, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title i {
+        color: var(--primary);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .info-item:hover {
+        background: rgba(138, 43, 226, 0.1);
+        transform: translateX(5px);
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--primary);
+        min-width: 100px;
+        margin-right: 15px;
+    }
+
+    .progress-container {
+        margin: 20px 0;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+
+    .footer-wrapper {
+        grid-column: 1 / -1;
+        text-align: center;
+    }
+
+    footer {
+        text-align: center;
+        padding: 30px 0;
+        color: #777;
+        font-size: 0.9rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    .progress-bar {
+        height: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        border-radius: 10px;
+        transition: width 1s ease;
+        position: relative;
+    }
+
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shine 2s infinite;
+    }
+
+    @keyframes shine {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    .charts-section {
+        grid-column: 1 / -1;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 40px;
+    }
+
+    .chart-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+
+    @media (max-width: 768px) {
+        .chart-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .chart-container {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 15px;
+        padding: 20px;
+        height: 300px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chart-title {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+        color: #ddd;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .chart-placeholder {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #777;
+        font-size: 1.1rem;
+    }
+
+    .actions-section {
+        grid-column: 1 / -1;
+        text-align: center;
+        margin: 40px 0;
+    }
+
+    .refresh-btn {
+        background: linear-gradient(45deg, var(--primary), var(--secondary));
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        font-size: 1.1rem;
+        border-radius: 50px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 20px rgba(138, 43, 226, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .refresh-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 25px rgba(138, 43, 226, 0.5);
+    }
+
+    .refresh-btn:active {
+        transform: translateY(0);
+    }
+
+    .loading {
+        display: none;
+        color: var(--primary);
+        margin-top: 20px;
+        font-size: 1rem;
+    }
+
+    footer {
+        text-align: center;
+        padding: 30px 0;
+        color: #777;
+        font-size: 0.9rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(138, 43, 226, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 15px rgba(138, 43, 226, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(138, 43, 226, 0);
+        }
+    }
+
+    .glow {
+        text-shadow: 0 0 10px rgba(138, 43, 226, 0.7);
+    }
+    </style>
+</head>
+<body>
+<div class="background-animation" id="backgroundAnimation"></div>
+
+<header>
+    <div class="logo">
+        <i class="fas fa-film"></i>
+    </div>
+    <h1 class="glow">大生意人</h1>
+    <p class="subtitle">古代传奇剧 · 陈晓、孙千主演</p>
+    <div class="header-info-container" style="display: flex; justify-content: center; align-items: center; gap: 30px; margin-top: 15px;">
+        <div class="author-info">
+            作者：<a href="https://weibo.com/u/2136166244" class="author-link" target="_blank" style="color: red;">九处</a>
+        </div>
+        <div class="reward-info">
+            <a href="https://pic.sl.al/gdrive/pic/2025-11-26/fileid_1aPF614Jn4683MxgdV3UiuvN5lKyCLsdE_%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20251125182103_66_269.jpg" target="_blank" style="text-decoration: none; color: #ffd700;">
+                <i class="fas fa-money-bag"></i> 打赏作者
+            </a>
+        </div>
+    </div>
+</header>
+
+
+<div class="stats-container">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-fire"></i>
+        </div>
+        <div class="stat-title">爱奇艺热度指数</div>
+        <div class="stat-value" id="heatValue">--</div>
+        <!--            <div class="stat-trend trend-up">-->
+        <!--                <i class="fas fa-arrow-up"></i>-->
+        <!--                <span>2.5% 上升</span>-->
+        <!--            </div>-->
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fab fa-weibo"></i>
+        </div>
+        <div class="stat-title">微博指数</div>
+        <div class="stat-value" id="weiboIndexValue">--</div>
+        <!--            <div class="stat-trend trend-up">-->
+        <!--                <i class="fas fa-arrow-up"></i>-->
+        <!--                <span>5.2% 上升</span>-->
+        <!--            </div>-->
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-play-circle"></i>
+        </div>
+        <div class="stat-title">灯塔今日实时播放量</div>
+        <div class="stat-value" id="ssbflValue">--</div>
+        <!--            <div class="stat-trend trend-down">-->
+        <!--                <i class="fas fa-arrow-down"></i>-->
+        <!--                <span>1.8% 下降</span>-->
+        <!--            </div>-->
+    </div>
+
+
+    <div class="stat-card">
+        <div class="stat-icon">
+            <img src="https://img1.doubanio.com/favicon.ico" alt="豆瓣" style="width: 2.5rem; height: 2.5rem;">
+        </div>
+        <div class="stat-title">豆瓣评分</div>
+        <div class="stat-value" id="rating-value">--</div>
+        <div class="stat-trend">
+            <span id="review-count">-- 评价</span>
+        </div>
+    </div>
+<!--    // 在现有的 stats-container 中添加新的统计卡片-->
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-tv"></i>
+        </div>
+        <div class="stat-title">酷云直播收视率</div>
+        <div class="stat-value" id="kuyunRatingValue">--</div>
+<!--        <div class="stat-trend">-->
+<!--            <span id="kuyunUpdateTime">&#45;&#45;</span>-->
+<!--        </div>-->
+    </div>
+</div> <!-- 这个闭合标签是关键 -->
+<div class="content">
+    <div class="poster-section">
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+            <!-- 原始海报 -->
+            <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; align-items: center;">
+                <h3 style="margin-bottom: 15px; color: #ffd700;">剧集海报</h3>
+                <img src="https://s21.ax1x.com/2025/11/25/pZAJwXF.jpg"
+                     alt="大生意人海报" class="poster">
+            </div>
+
+            <!-- 追剧日历 -->
+            <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; align-items: center;">
+                <h3 style="margin-bottom: 15px; color: #ffd700;">追剧日历</h3>
+                <img src="https://api.codetabs.com/v1/proxy?quest=https://pic0.iqiyipic.com/lequ/20251125/754bc22f48a44fdf9196787bba500f6c.jpg"
+                     alt="追剧日历" class="poster" style="width: 100%; max-width: 350px;">
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2 class="section-title">
+            <i class="fas fa-info-circle"></i>
+            剧集信息
+        </h2>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">剧名：</span>
+                <span>大生意人</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">主演：</span>
+                <span>陈晓、孙千</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">类型：</span>
+                <span>商战、剧情、自制、古装、文学改编、晚清、内地</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">简介：</span>
+                <span>生逢乱世的古平原因蒙受冤团而遭流放宁古塔，他在夹缝中生存却又逆风翻盘，从文弱书生到茶叶发家、以盐立业，再到团结各地商帮力量联手数国数民，完成了从流犯到商界巨擘的送袭，在成为商王的热血奋斗过程中，古平原与常玉儿、李钦、常四、李万堂 、苏紫轩、李成、白依梅、王天贵等人相识，共同塑造出了一群复杂立体、有血有肉的晚清传奇群像。</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">播出平台：</span>
+                <span>CCTV8、爱奇艺</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">更新时间：</span>
+                <span id="updateNotification">--</span>
+            </div>
+        </div>
+
+        <div class="info-item">
+            <span class="info-label">更新进度：</span>
+            <span id="updateStatus">--</span>
+        </div>
+
+        <!--                <div class="progress-bar">-->
+        <!--                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>-->
+        <!--                </div>-->
+    </div>
+
+    <!--    <div class="charts-section">-->
+    <!--        <h2 class="section-title">-->
+    <!--            <i class="fas fa-chart-line"></i>-->
+    <!--            数据趋势-->
+    <!--        </h2>-->
+
+    <!--        <div class="chart-grid">-->
+    <!--            <div class="chart-container">-->
+    <!--                <h3 class="chart-title">-->
+    <!--                    <i class="fas fa-fire"></i>-->
+    <!--                    热度变化趋势-->
+    <!--                </h3>-->
+    <!--                <div class="chart-placeholder">-->
+    <!--                    <i class="fas fa-chart-bar"></i>-->
+    <!--                    &nbsp;热度趋势图表-->
+    <!--                </div>-->
+    <!--            </div>-->
+
+    <!--            <div class="chart-container">-->
+    <!--                <h3 class="chart-title">-->
+    <!--                    <i class="fas fa-users"></i>-->
+    <!--                    观众评分分布-->
+    <!--                </h3>-->
+    <!--                <div class="chart-placeholder">-->
+    <!--                    <i class="fas fa-chart-pie"></i>-->
+    <!--                    &nbsp;评分分布图表-->
+    <!--                </div>-->
+    <!--            </div>-->
+    <!--        </div>-->
+    <!--    </div>-->
+
+
+    <!-- 将最后更新时间的div移动到正确位置 -->
+    <div class="actions-section">
+        <button class="refresh-btn pulse" id="refreshAllBtn">
+            <i class="fas fa-sync-alt"></i>
+            刷新所有数据
+        </button>
+        <div class="loading" id="loadingAll">
+            <i class="fas fa-spinner fa-spin"></i>
+            正在更新数据...
+        </div>
+        <!-- 将最后更新时间显示移动到这里 -->
+        <div class="last-update" id="lastUpdate" style="color: #777; font-size: 0.9rem; margin-top: 10px; text-align: center;">
+            <!-- 最后更新时间将在这里显示 -->
+        </div>
+    </div>
+
+    <!-- 在<footer>外部添加一个独立的<div>容器 -->
+
+    <div class="footer-wrapper"> <!-- 新增包装容器 -->
+        <footer>
+            <p>数据来源：电视剧预约平台 | 本页面仅用于演示</p>
+            <p>© 2025 电视剧数据看板 - 所有数据实时更新</p>
+        </footer>
+    </div>
+
+    <script>
+
+        // 创建背景动画元素
+    function createBackgroundAnimation() {
+        const container = document.getElementById('backgroundAnimation');
+        for (let i = 0; i < 15; i++) {
+            const el = document.createElement('div');
+            const size = Math.random() * 100 + 50;
+            el.style.width = `${size}px`;
+            el.style.height = `${size}px`;
+            el.style.left = `${Math.random() * 100}%`;
+            el.style.top = `${Math.random() * 100}%`;
+            el.style.animationDuration = `${Math.random() * 20 + 10}s`;
+            el.style.animationDelay = `${Math.random() * 5}s`;
+            container.appendChild(el);
+        }
+    }
+    // 添加获取酷云直播收视率数据的函数
+
+    // 修改获取酷云直播收视率数据的函数，使用代理服务器
+
+    // 修改获取酷云直播收视率数据的函数
+    async function fetchKuyunRatingData() {
+        const kuyunElement = document.getElementById('kuyunRatingValue');
+        // 移除对 updateTimeElement 的引用
+
+        try {
+            // 使用新接口URL
+            const proxyUrl = 'https://api.codetabs.com/v1/proxy?quest=';
+            const targetUrl = encodeURIComponent('https://www.ky.live/api/same_type/real_epgs?caid=1574644&tvid=13&area=-1');
+            const apiUrl = proxyUrl + targetUrl;
+
+            const response = await fetch(apiUrl);
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.status && data.data && Array.isArray(data.data)) {
+                    // 查找CCTV-8频道且节目名为"大生意人"的数据
+                    const targetData = data.data.find(item =>
+                        item.tvn === "CCTV-8" && item.epg.includes("大生意人")
+                    );
+
+                    if (targetData) {
+                        // 转换为百分比格式（保留4位小数）
+                        const percentage = (targetData.r * 100).toFixed(4) + '%';
+                        kuyunElement.textContent = percentage;
+
+                        // 移除时间显示代码
+                        // updateTimeElement.textContent = targetData.time;
+                    } else {
+                        throw new Error('未找到CCTV-8《大生意人》收视率数据');
+                    }
+                } else {
+                    throw new Error('Invalid data format');
+                }
+            } else {
+                throw new Error('Failed to fetch Kuyun rating data');
+            }
+        } catch (error) {
+            console.error('获取酷云收视率数据失败:', error);
+            kuyunElement.textContent = '--';
+            // 移除时间显示代码
+            // updateTimeElement.textContent = '获取失败';
+        }
+    }
+
+    // 在页面加载时获取所有数据的函数中添加最后更新时间显示
+
+    // 替换整个 DOMContentLoaded 事件处理函数
+    document.addEventListener('DOMContentLoaded', function() {
+        createBackgroundAnimation();
+
+        // 热度API接口地址
+        const heatApiUrl = 'https://mesh.if.iqiyi.com/tvg/v2/lw/base_info?entity_id=6381730674829700&device_id=2sjzaktrme4artvvrxgtloka75hrqjex&auth_cookie=56IKoNi20I7iHRA2KZds0gBjiZm3hHdByxOzQF6vazVxfgEkipWKm22X8pQ8Auej0lBA41&user_id=1097201185&vip_type=-1&vip_status=3&conduit_id=&pcv=13.114.23859&app_version=13.114.23859&ext=&app_mode=standard&scale=125&timestamp=1764069803787&src=pca_tvg&os=&ad_ext=%7B%22r%22%3A%222.9.2-ares6-pure%22%7D&sign=280BD2A1ED8D9DF545E34646577CDD3D';
+
+        // 格式化数字，添加千位分隔符
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        // 获取热度数据
+        async function fetchHeatData() {
+            try {
+                const response = await fetch(heatApiUrl);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP错误! 状态: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('API返回数据:', result);
+
+                if (result && result.data && result.data.base_data) {
+                    // 处理热度值
+                    if (typeof result.data.base_data.heat === 'number') {
+                        const heat = result.data.base_data.heat;
+                        const heatValueElement = document.getElementById('heatValue');
+                        heatValueElement.textContent = formatNumber(heat);
+                    }
+
+                    // 处理更新信息
+                    if (result.data.base_data.update_info) {
+                        const updateInfo = result.data.base_data.update_info;
+
+                        // 更新时间
+                        if (updateInfo.update_notification) {
+                            document.getElementById('updateNotification').textContent = updateInfo.update_notification;
+                        }
+
+                        // 更新进度状态
+                        if (updateInfo.update_status) {
+                            document.getElementById('updateStatus').textContent = updateInfo.update_status;
+                        }
+                    }
+                } else {
+                    throw new Error('API返回数据格式不正确或热度值不存在');
+                }
+            } catch (error) {
+                console.error('获取热度数据失败:', error);
+                const heatValueElement = document.getElementById('heatValue');
+                heatValueElement.textContent = '--';
+            }
+        }
+
+        // 使用JSONP获取豆瓣评分数据
+        function fetchDoubanRating() {
+            try {
+                // 创建script标签实现JSONP
+                const script = document.createElement('script');
+                const callbackName = 'doubanCallback_' + Date.now();
+
+                window[callbackName] = function(data) {
+                    // 显示评价人数和评分
+                    document.getElementById('review-count').textContent = data.rating.count.toLocaleString() + ' 评价';
+                    document.getElementById('rating-value').textContent = data.rating.value;
+
+                    // 清理
+                    document.head.removeChild(script);
+                    delete window[callbackName];
+                };
+
+                script.src = `https://m.douban.com/rexxar/api/v2/tv/36721163?ck=jq_a&for_mobile=1&callback=${callbackName}`;
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('获取豆瓣评分失败:', error);
+                document.getElementById('review-count').textContent = '-- 评价';
+                document.getElementById('rating-value').textContent = '--';
+            }
+        }
+
+        async function fetchWeiboIndexData() {
+            const weiboIndexElement = document.getElementById('weiboIndexValue');
+
+            try {
+                const proxyUrl = 'https://api.codetabs.com/v1/proxy?quest=';
+                const targetUrl = encodeURIComponent('https://rprank.tv.weibo.cn/episode/api/detail?current_uid=5311346698&pid=3281&sign=b32c6b38c121e6c9dd8f4be10914844dd6dda3be&program_type=0&ts=1764064832&c=applet&gsid=_2A25EIQ5VDeRxGeNN6lMS9CjKwjSIHXVldwadrDV6PUJbkdAbLVSskWpNScKCqj8OuNbCjRel3mMjnfZFjkk4TZY8');
+
+                const response = await fetch(proxyUrl + targetUrl);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.code === 1000 && data.data && data.data.program) {
+                        // 提取微博指数数据
+                        const weiboScore = data.data.program.score;
+                        weiboIndexElement.textContent = weiboScore;
+                    } else {
+                        throw new Error('Invalid data format');
+                    }
+                } else {
+                    throw new Error('Failed to fetch Weibo index data');
+                }
+            } catch (error) {
+                console.error('Error fetching Weibo index data:', error);
+                weiboIndexElement.textContent = '--';
+            }
+        }
+
+        // 获取实时播放量数据
+        async function fetchSSBFLData() {
+            const ssbflElement = document.getElementById('ssbflValue');
+
+            try {
+                // 使用代理服务器获取数据
+                const proxyUrl = 'https://api.codetabs.com/v1/proxy?quest=';
+                const targetUrl = encodeURIComponent('https://dengtapro.taopiaopiao.com/movie-detail.html?hideTitlebar=true&transparentStatusBar=true&mediaId=1430081');
+
+                const response = await fetch(proxyUrl + targetUrl);
+
+                if (response.ok) {
+                    const html = await response.text();
+                    // 使用正则表达式提取实时播放量
+                    const ssbflMatch = html.match(/<div\s+class="num\s+num-color">\s*<span>([^<]+)<\/span>\s*<\/div>/);
+
+                    if (ssbflMatch && ssbflMatch[1]) {
+                        ssbflElement.textContent = ssbflMatch[1];
+                    } else {
+                        throw new Error('未找到实时播放量数据');
+                    }
+                } else {
+                    throw new Error('请求失败');
+                }
+            } catch (error) {
+                console.error('获取实时播放量失败:', error);
+                ssbflElement.textContent = '--';
+            }
+        }
+
+        // 新增函数：更新最后更新时间显示
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('lastUpdate').textContent = `最后更新: ${timeString}`;
+        }
+
+
+// 修改 refreshAllData 函数，添加酷云数据获取
+        async function refreshAllData() {
+            const refreshBtn = document.getElementById('refreshAllBtn');
+            const loadingElement = document.getElementById('loadingAll');
+            const lastUpdateElement = document.getElementById('lastUpdate');
+
+            refreshBtn.disabled = true;
+            loadingElement.style.display = 'block';
+            refreshBtn.classList.remove('pulse');
+
+            try {
+                await Promise.all([
+                    fetchHeatData(),
+                    fetchWeiboIndexData(),
+                    fetchSSBFLData(),
+                    fetchKuyunRatingData(), // 添加这一行
+                    new Promise(resolve => {
+                        fetchDoubanRating();
+                        setTimeout(resolve, 1000);
+                    })
+                ]);
+
+                // 数据刷新成功后更新最后更新时间
+                updateLastUpdateTime();
+            } catch (error) {
+                console.error('刷新数据失败:', error);
+                lastUpdateElement.textContent = '更新失败';
+            } finally {
+                setTimeout(() => {
+                    refreshBtn.disabled = false;
+                    loadingElement.style.display = 'none';
+                    refreshBtn.classList.add('pulse');
+                }, 1000);
+            }
+        }
+
+// 修改 autoRefreshData 函数，添加酷云数据获取
+        async function autoRefreshData() {
+            const loadingElement = document.getElementById('loadingAll');
+            const refreshBtn = document.getElementById('refreshAllBtn');
+
+            // 显示加载动画
+            if (loadingElement) {
+                loadingElement.style.display = 'block';
+            }
+            if (refreshBtn) {
+                refreshBtn.classList.remove('pulse');
+            }
+
+            try {
+                await Promise.all([
+                    fetchHeatData(),
+                    fetchWeiboIndexData(),
+                    fetchSSBFLData(),
+                    fetchKuyunRatingData() // 添加这一行
+                ]);
+
+                // 更新时间显示
+                updateLastUpdateTime();
+            } catch (error) {
+                console.error('自动刷新数据失败:', error);
+            } finally {
+                // 隐藏加载动画
+                setTimeout(() => {
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+                    if (refreshBtn) {
+                        refreshBtn.classList.add('pulse');
+                    }
+                }, 1000);
+            }
+        }
+
+// 修改页面加载时的初始化函数，添加酷云数据获取
+        Promise.all([
+            fetchHeatData(),
+            fetchWeiboIndexData(),
+            fetchSSBFLData(),
+            fetchKuyunRatingData(), // 添加这一行
+            new Promise(resolve => {
+                fetchDoubanRating();
+                setTimeout(resolve, 1000);
+            })
+        ]).then(() => {
+            updateLastUpdateTime();
+        }).catch(error => {
+            console.error('初始数据加载失败:', error);
+            updateLastUpdateTime(); // 即使出错也显示时间
+        });
+
+
+        // 每3秒自动刷新一次数据（除豆瓣评分外的数据）
+        setInterval(autoRefreshData, 3 * 1000);
+
+        // 每30秒刷新豆瓣评分
+        setInterval(() => {
+            fetchDoubanRating();
+        }, 30 * 1000);
+
+// 在其他 setInterval 调用之后添加
+// 每3秒刷新一次酷云收视率数据
+        setInterval(() => {
+            fetchKuyunRatingData();
+        }, 3 * 1000);
+        // 刷新按钮事件
+        document.getElementById('refreshAllBtn').addEventListener('click', refreshAllData);
+    });
+    </script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大生意人 - 数据看板</title>
     <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://fastly.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>        :root {
